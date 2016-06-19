@@ -133,7 +133,17 @@ tasks.withType(FindBugs) {
   }
 }
 
-jacocoTestReport.dependsOn test
+jacocoTestReport {
+    group = "Reporting"
+    dependsOn test
+    reports {
+        xml.enabled false
+        csv.enabled false
+        html.destination "${buildDir}/reports/coverage"
+    }
+}
+
+check.dependsOn jacocoTestReport
 
 // .................................................................................................................. //
 
@@ -393,3 +403,27 @@ task wrapper(type: Wrapper) {
 }
 
 // .................................................................................................................. //
+
+task enhanceClasses(type: JavaExec) {
+  main = 'org.eclipse.golo.di.enhancer.GoloDIEnhancer'
+  args = [sourceSets.main.output.classesDir]
+  classpath = sourceSets.main.compileClasspath + files(compileJava.outputs) + files(processResources.outputs)
+  inputs.files goloSources
+  outputs.dir sourceSets.main.output.classesDir
+  description = 'Enhance compiled files in order to support dependency injection.'
+  group = 'Build'
+}
+
+classes.dependsOn enhanceClasses
+
+task enhanceTestClasses(type: JavaExec) {
+  main = 'org.eclipse.golo.di.enhancer.GoloDIEnhancer'
+  args = [sourceSets.test.output.classesDir]
+  classpath = sourceSets.main.compileClasspath + files(compileJava.outputs) + files(processResources.outputs)
+  inputs.files goloSources
+  outputs.dir sourceSets.main.output.classesDir
+  description = 'Enhance compiled files in order to support dependency injection.'
+  group = 'Build'
+}
+
+testClasses.dependsOn enhanceTestClasses
